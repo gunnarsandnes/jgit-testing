@@ -65,8 +65,7 @@ jobs:
       deploy:
         provider: script
         skip_cleanup: true
-        script:
-          - ./travisTag.sh
+        script: travisTag.sh
         on:
           branch: master
           #condition: $TRAVIS_TAG = ''
