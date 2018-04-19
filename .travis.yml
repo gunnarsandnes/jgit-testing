@@ -1,0 +1,72 @@
+cache:
+  directories:
+  - .autoconf
+  - $HOME/.m2
+
+matrix:
+  include:
+    - language: java
+      jdk:
+        - oraclejdk8
+
+
+services:
+  - docker # enable docker support in travis
+
+apt:
+  sources:
+  packages:
+
+#before_install:
+#  - export DOCKER_REGISTRY=localhost
+#  - export TAG=dev
+#  - git config --global credential.helper cache
+#  - sudo service postgresql stop
+
+
+install:
+   - free -m
+
+
+branches:
+  except:
+    - /TEST_.*/
+    - /QA_.*/
+
+jobs:
+  include:
+    - stage: Build # First build the project to look for syntax/build problems
+      script: mvn install -DskipTests -B
+      env:
+        - comment=First build the project to look for syntax/build problems
+        - MAVEN_OPTS=-Xmx2G
+
+    - stage: Tests # Run regular unit tests
+      script: mvn test -B
+      env:
+        - comment=Run regular unit tests
+        - MAVEN_OPTS=-Xmx2G
+      # find all directories with "surefire-reports", then all .txt files in those, and cat each one with file name first
+      # after_failure: find `find . -type d -name "surefire-reports"` -type f -name "*.txt" -printf "\n\n%p\n"  -exec cat {} \;
+      after_failure: cat `find . -name "*.txt" | grep "surefire-reports" `;
+
+    - stage: Tests # Run intergation tests
+      script:
+        - mvn install -DskipTests -B
+       # - ./runDocker.sh all
+        - mvn failsafe:integration-test -B -P integration failsafe:verify
+      env:
+        - comment=Run intergation tests
+        - MAVEN_OPTS=-Xmx2G
+      after_failure: cat `find . -name "*.txt" | grep "surefire-reports" `;
+
+    - stage: deploy
+      script: sleep 1
+      deploy:
+        provider: script
+        skip_cleanup: true
+        script:
+          - ./travisTag.sh
+        on:
+          branch: master
+          condition: $TRAVIS_TAG = ''
