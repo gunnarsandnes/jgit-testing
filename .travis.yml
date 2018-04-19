@@ -66,9 +66,7 @@ jobs:
         provider: script
         skip_cleanup: true
         script:
-          - comment=Run tag script
           - ./travisTag.sh
         on:
-          - comment=In on
           branch: master
-          condition: $TRAVIS_TAG = ''
+          #condition: $TRAVIS_TAG = ''
