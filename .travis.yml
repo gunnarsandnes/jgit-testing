@@ -17,11 +17,9 @@ apt:
   sources:
   packages:
 
-#before_install:
-#  - export DOCKER_REGISTRY=localhost
-#  - export TAG=dev
-#  - git config --global credential.helper cache
-#  - sudo service postgresql stop
+before_install:
+  - export TAG=dev
+  - git config --global credential.helper cache
 
 
 install:
@@ -53,10 +51,9 @@ jobs:
     - stage: Tests # Run intergation tests
       script:
         - mvn install -DskipTests -B
-       # - ./runDocker.sh all
         - mvn failsafe:integration-test -B -P integration failsafe:verify
       env:
-        - comment=Run intergation tests
+        - comment=Run integration tests
         - MAVEN_OPTS=-Xmx2G
       after_failure: cat `find . -name "*.txt" | grep "surefire-reports" `;
 
@@ -65,7 +62,8 @@ jobs:
       deploy:
         provider: script
         skip_cleanup: true
-        script: travisTag.sh
+        script:
+          - ./travisTag.sh
         on:
           branch: master
-          #condition: $TRAVIS_TAG = ''
+          condition: $TRAVIS_TAG = ''
